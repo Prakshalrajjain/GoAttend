@@ -1,0 +1,26 @@
+
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+
+# Test and coverage files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local database files
+*.db
+*.sqlite3
+
+# Generated logs
+*.log
+
+# Local uploaded photographs
+storage/photos/*
+!storage/photos/.gitkeep
