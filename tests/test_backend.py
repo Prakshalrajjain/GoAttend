@@ -59,9 +59,9 @@ def test_auth_me_requires_token():
 
 def test_registration_and_login_flow():
     import uuid
-    unique_email = f"test_{uuid.uuid4().hex[:8]}@example.com"
+    unique_email = f"aniket_{uuid.uuid4().hex[:6]}@example.com"
     payload = {
-        "full_name": "Test Engineer",
+        "full_name": "Aniket Deshmukh",
         "email": unique_email,
         "password": "Password123!",
     }
@@ -197,8 +197,8 @@ def test_admin_authorization_and_features():
     import uuid
 
     # 1. An ordinary employee attempting admin endpoints should get 403 Forbidden
-    emp_email = f"standard_{uuid.uuid4().hex[:6]}@example.com"
-    client.post("/api/auth/register", json={"full_name": "Standard Emp", "email": emp_email, "password": "Password123!"})
+    emp_email = f"pooja_{uuid.uuid4().hex[:6]}@example.com"
+    client.post("/api/auth/register", json={"full_name": "Pooja Sharma", "email": emp_email, "password": "Password123!"})
     login_emp = client.post("/api/auth/login", json={"email": emp_email, "password": "Password123!"}).json()
     emp_headers = {"Authorization": f"Bearer {login_emp['access_token']}"}
 
@@ -213,16 +213,16 @@ def test_admin_authorization_and_features():
     assert res_forbidden_create.status_code == 403
 
     # 2. Setup an admin (using setup-admin or promoting user)
-    admin_email = f"admin_{uuid.uuid4().hex[:6]}@example.com"
+    admin_email = f"rajesh_{uuid.uuid4().hex[:6]}@example.com"
     # Call setup-admin (or direct DB update)
     res_admin_setup = client.post(
         "/api/auth/setup-admin",
-        json={"full_name": "Primary Admin", "email": admin_email, "password": "AdminPassword123!"},
+        json={"full_name": "Rajesh Patel", "email": admin_email, "password": "AdminPassword123!"},
     )
     if res_admin_setup.status_code != 200:
         # If admin already exists, promote this user directly via SQL in a test context
         from backend.database import get_connection
-        client.post("/api/auth/register", json={"full_name": "Primary Admin", "email": admin_email, "password": "AdminPassword123!"})
+        client.post("/api/auth/register", json={"full_name": "Rajesh Patel", "email": admin_email, "password": "AdminPassword123!"})
         with get_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("UPDATE employees SET role = 'admin' WHERE email = %s", (admin_email,))
