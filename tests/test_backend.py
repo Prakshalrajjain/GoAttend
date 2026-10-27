@@ -276,3 +276,32 @@ def test_admin_authorization_and_features():
     assert "text/csv" in res_csv.headers["content-type"]
     assert "Record ID" in res_csv.text
 
+    # 9. Admin can update attendance status to 'late' and 'rejected'
+    res_att_list = client.get("/api/admin/attendance", headers=admin_headers)
+    assert res_att_list.status_code == 200
+    if len(res_att_list.json()) > 0:
+        target_att_id = res_att_list.json()[0]["id"]
+
+        # Ordinary employee should get 403 Forbidden
+        res_emp_blocked = client.put(f"/api/admin/attendance/{target_att_id}/status?status=late", headers=emp_headers)
+        assert res_emp_blocked.status_code == 403
+
+        # Invalid status should return 400 or 422
+        res_invalid = client.put(f"/api/admin/attendance/{target_att_id}/status?status=unknown", headers=admin_headers)
+        assert res_invalid.status_code in (400, 422)
+
+        # Admin updates status to 'late'
+        res_late = client.put(f"/api/admin/attendance/{target_att_id}/status?status=late", headers=admin_headers)
+        assert res_late.status_code == 200
+        assert res_late.json()["status"] == "late"
+
+        # Admin updates status to 'rejected'
+        res_rej = client.put(f"/api/admin/attendance/{target_att_id}/status?status=rejected", headers=admin_headers)
+        assert res_rej.status_code == 200
+        assert res_rej.json()["status"] == "rejected"
+
+        # Restore to 'present'
+        res_pres = client.put(f"/api/admin/attendance/{target_att_id}/status?status=present", headers=admin_headers)
+        assert res_pres.status_code == 200
+        assert res_pres.json()["status"] == "present"
+

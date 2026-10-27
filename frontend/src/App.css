@@ -802,6 +802,68 @@ button:disabled {
   border: 1px solid #ef444450;
 }
 
+.status-control-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-select {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.status-select.present {
+  background: #71e0b020;
+  color: #71e0b0;
+  border: 1px solid #71e0b060;
+}
+
+.status-select.late {
+  background: #f59e0b20;
+  color: #f59e0b;
+  border: 1px solid #f59e0b60;
+}
+
+.status-select.rejected {
+  background: #ef444420;
+  color: #ef4444;
+  border: 1px solid #ef444460;
+}
+
+.status-select option {
+  background: #0d1519;
+  color: #f1f5f4;
+  font-weight: 600;
+}
+
+.status-select:hover:not(:disabled) {
+  filter: brightness(1.2);
+}
+
+.status-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mini-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(113, 224, 176, 0.2);
+  border-top-color: #71e0b0;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
 .attendance-evidence-box {
   display: flex;
   align-items: center;

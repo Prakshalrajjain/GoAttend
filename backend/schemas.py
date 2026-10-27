@@ -90,3 +90,7 @@ class AttendanceOut(BaseModel):
     status: str
 
 
+class AttendanceStatusUpdate(BaseModel):
+    status: str = Field(..., pattern=r"^(present|late|rejected)$")
+
+

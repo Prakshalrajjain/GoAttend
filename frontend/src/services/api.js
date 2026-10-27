@@ -257,6 +257,12 @@ export async function getAdminAttendance({ employeeId, officeId, status, startDa
   return request(`/api/admin/attendance${query}`)
 }
 
+export async function updateAttendanceStatus(attendanceId, status) {
+  return request(`/api/admin/attendance/${attendanceId}/status?status=${encodeURIComponent(status)}`, {
+    method: 'PUT',
+  })
+}
+
 export async function getAdminAnalytics() {
   return request('/api/admin/analytics')
 }

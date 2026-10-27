@@ -8,6 +8,7 @@ import {
   getExportCsvUrl,
   getOfficeLocations,
   resolvePhotoUrl,
+  updateAttendanceStatus,
   updateEmployeeRole,
 } from '../services/api.js'
 import PlotlyChart from './PlotlyChart.jsx'
@@ -26,6 +27,30 @@ export default function AdminDashboard({ user }) {
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
   const [previewModalData, setPreviewModalData] = useState(null)
+  const [statusUpdatingId, setStatusUpdatingId] = useState(null)
+  const [statusActionMsg, setStatusActionMsg] = useState('')
+
+  // Handle changing status of student / employee
+  async function handleStatusChange(attendanceId, newStatus, employeeName) {
+    setStatusUpdatingId(attendanceId)
+    setStatusActionMsg('')
+    try {
+      await updateAttendanceStatus(attendanceId, newStatus)
+      setAttendanceRecords((prev) =>
+        prev.map((rec) => (rec.id === attendanceId ? { ...rec, status: newStatus } : rec))
+      )
+      if (previewModalData && previewModalData.id === attendanceId) {
+        setPreviewModalData((prev) => ({ ...prev, status: newStatus }))
+      }
+      setStatusActionMsg(`✓ Attendance status for ${employeeName || 'employee'} updated to ${newStatus.toUpperCase()}`)
+      setTimeout(() => setStatusActionMsg(''), 4500)
+    } catch (err) {
+      console.error('Failed to update status:', err)
+      alert(err.message || 'Failed to update attendance status.')
+    } finally {
+      setStatusUpdatingId(null)
+    }
+  }
 
   // Office Locations state
   const [offices, setOffices] = useState([])
@@ -407,6 +432,12 @@ export default function AdminDashboard({ user }) {
           </div>
 
           <div className="dashboard-card table-card">
+            {statusActionMsg && (
+              <div className="auth-alert success" style={{ marginBottom: '16px' }}>
+                <span>{statusActionMsg}</span>
+              </div>
+            )}
+
             {attendanceLoading ? (
               <div className="loading-state">Loading attendance records...</div>
             ) : attendanceRecords.length === 0 ? (
@@ -423,7 +454,7 @@ export default function AdminDashboard({ user }) {
                       <th>Office</th>
                       <th>Check-In</th>
                       <th>Check-Out</th>
-                      <th>Status</th>
+                      <th>Status (Authority Override)</th>
                       <th>Coordinates</th>
                       <th>Evidence (Dual Frame)</th>
                     </tr>
@@ -440,9 +471,20 @@ export default function AdminDashboard({ user }) {
                         <td className="highlight">{formatTime(r.check_in_at)}</td>
                         <td>{formatTime(r.check_out_at)}</td>
                         <td>
-                          <span className={`status-tag ${r.status}`}>
-                            {r.status?.toUpperCase()}
-                          </span>
+                          <div className="status-control-cell">
+                            <select
+                              className={`status-select ${r.status}`}
+                              value={r.status}
+                              disabled={statusUpdatingId === r.id}
+                              onChange={(e) => handleStatusChange(r.id, e.target.value, r.employee_name)}
+                              title="Admin authority: Charge status to Present, Late, or Rejected"
+                            >
+                              <option value="present">🟢 PRESENT</option>
+                              <option value="late">🟡 LATE</option>
+                              <option value="rejected">🔴 REJECTED</option>
+                            </select>
+                            {statusUpdatingId === r.id && <span className="mini-spinner" />}
+                          </div>
                         </td>
                         <td className="font-mono text-xs">
                           {r.check_in_latitude?.toFixed(4)}, {r.check_in_longitude?.toFixed(4)}
@@ -456,6 +498,9 @@ export default function AdminDashboard({ user }) {
                                 className="table-photo-thumb"
                                 onClick={() =>
                                   setPreviewModalData({
+                                    id: r.id,
+                                    status: r.status,
+                                    employeeName: r.employee_name,
                                     photoUrl: r.photo_url,
                                     liveFrameUrl: r.live_frame_url,
                                     title: `Dual Verification Proofs — ${r.employee_name}`,
@@ -468,6 +513,9 @@ export default function AdminDashboard({ user }) {
                                 className="view-photo-btn"
                                 onClick={() =>
                                   setPreviewModalData({
+                                    id: r.id,
+                                    status: r.status,
+                                    employeeName: r.employee_name,
                                     photoUrl: r.photo_url,
                                     liveFrameUrl: r.live_frame_url,
                                     title: `Dual Verification Proofs — ${r.employee_name}`,
@@ -758,6 +806,61 @@ export default function AdminDashboard({ user }) {
                 )}
               </div>
             </div>
+
+            {/* In-Modal Authority Status Override */}
+            {previewModalData.id && (
+              <div
+                className="modal-status-override-bar"
+                style={{
+                  marginTop: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '12px 16px',
+                  background: '#070b0e',
+                  borderRadius: '10px',
+                  border: '1px solid #ffffff14',
+                  flexWrap: 'wrap',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '13px', color: '#cbd5e1', fontWeight: 600 }}>Authority Status:</span>
+                  <span className={`status-tag ${previewModalData.status || 'present'}`}>
+                    {(previewModalData.status || 'present').toUpperCase()}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    style={{ padding: '6px 14px', fontSize: '12px', borderColor: '#71e0b060', color: '#71e0b0' }}
+                    disabled={statusUpdatingId === previewModalData.id || previewModalData.status === 'present'}
+                    onClick={() => handleStatusChange(previewModalData.id, 'present', previewModalData.employeeName)}
+                  >
+                    🟢 Set Present
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    style={{ padding: '6px 14px', fontSize: '12px', borderColor: '#f59e0b60', color: '#f59e0b' }}
+                    disabled={statusUpdatingId === previewModalData.id || previewModalData.status === 'late'}
+                    onClick={() => handleStatusChange(previewModalData.id, 'late', previewModalData.employeeName)}
+                  >
+                    🟡 Set Late
+                  </button>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    style={{ padding: '6px 14px', fontSize: '12px', borderColor: '#ef444460', color: '#ef4444' }}
+                    disabled={statusUpdatingId === previewModalData.id || previewModalData.status === 'rejected'}
+                    onClick={() => handleStatusChange(previewModalData.id, 'rejected', previewModalData.employeeName)}
+                  >
+                    🔴 Set Rejected
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

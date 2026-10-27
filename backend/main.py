@@ -15,6 +15,7 @@ from backend.database import get_connection
 from backend.dependencies import get_current_employee, require_admin
 from backend.schemas import (
     AttendanceOut,
+    AttendanceStatusUpdate,
     CheckInRequest,
     CheckOutRequest,
     EmployeeLogin,
@@ -926,6 +927,76 @@ def get_all_attendance(
         }
         for r in rows
     ]
+
+
+@app.put("/api/admin/attendance/{attendance_id}/status")
+def update_attendance_status_endpoint(
+    attendance_id: int,
+    status_update: Optional[AttendanceStatusUpdate] = None,
+    new_status_param: Optional[str] = Query(None, alias="status", pattern=r"^(present|late|rejected)$"),
+    current_admin: dict = Depends(require_admin),
+):
+    new_status = status_update.status if status_update else new_status_param
+    if not new_status or new_status not in ("present", "late", "rejected"):
+        raise HTTPException(
+            status_code=400,
+            detail="Status must be one of: 'present', 'late', 'rejected'",
+        )
+
+    with get_connection() as connection:
+        with connection.cursor() as cursor:
+            # Check if attendance record exists
+            cursor.execute(
+                """
+                SELECT a.id, a.employee_id, a.status, e.full_name
+                FROM attendance a
+                JOIN employees e ON a.employee_id = e.id
+                WHERE a.id = %s
+                """,
+                (attendance_id,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Attendance record #{attendance_id} not found.",
+                )
+
+            old_status = row[2]
+            employee_name = row[3]
+
+            # Update attendance status
+            cursor.execute(
+                """
+                UPDATE attendance
+                SET status = %s
+                WHERE id = %s
+                RETURNING id, status
+                """,
+                (new_status, attendance_id),
+            )
+
+            # Insert audit record
+            audit_details = json.dumps({
+                "previous_status": old_status,
+                "new_status": new_status,
+                "changed_by": current_admin["email"],
+                "changed_at": datetime.now(timezone.utc).isoformat(),
+            })
+            cursor.execute(
+                """
+                INSERT INTO attendance_audit (attendance_id, actor_employee_id, action, details)
+                VALUES (%s, %s, 'STATUS_UPDATE', %s::jsonb)
+                """,
+                (attendance_id, current_admin["id"], audit_details),
+            )
+
+    return {
+        "message": f"Attendance status for {employee_name} updated from '{old_status}' to '{new_status}'",
+        "attendance_id": attendance_id,
+        "previous_status": old_status,
+        "status": new_status,
+    }
 
 
 @app.get("/api/admin/analytics")
