@@ -1,11 +1,11 @@
 import { useState } from 'react'
-import { loginUser, registerUser, setupFirstAdmin } from '../services/api.js'
+import { loginUser, registerUser } from '../services/api.js'
 
 export default function LoginForm({ onBack, onLoginSuccess }) {
   const [mode, setMode] = useState('authority') // 'authority' | 'login' | 'register'
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('admin@geoattend.com')
-  const [password, setPassword] = useState('Admin1234!')
+  const [email, setEmail] = useState('prakshalraj111@gmail.com')
+  const [password, setPassword] = useState('12345678')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -15,8 +15,8 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
     setError('')
     setSuccessMessage('')
     if (newMode === 'authority') {
-      setEmail('admin@geoattend.com')
-      setPassword('Admin1234!')
+      setEmail('prakshalraj111@gmail.com')
+      setPassword('12345678')
     } else if (newMode === 'login') {
       setEmail('')
       setPassword('')
@@ -27,15 +27,9 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
     }
   }
 
-  function handleFillUserAdmin() {
+  function handleFillAdminCredentials() {
     setEmail('prakshalraj111@gmail.com')
-    setPassword('')
-    setError('')
-  }
-
-  function handleFillDemoAdmin() {
-    setEmail('admin@geoattend.com')
-    setPassword('Admin1234!')
+    setPassword('12345678')
     setError('')
   }
 
@@ -122,7 +116,7 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
 
       <p className="description">
         {mode === 'authority' &&
-          'Sign in with administrative privileges to view all employee registrations, track real-time attendance with GPS coordinates, and manage office locations.'}
+          'Sign in with your administrative account to view all staff registrations, track real-time attendance with GPS coordinates, inspect verification photos, and manage office locations.'}
         {mode === 'login' &&
           'Sign in with your employee email to access your attendance workspace, verify location, and capture check-in photos.'}
         {mode === 'register' &&
@@ -142,10 +136,10 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <strong style={{ color: '#fbbf24' }}>🔑 Authority Credentials:</strong>
+            <strong style={{ color: '#fbbf24' }}>🔑 Primary Authority Admin:</strong>
             <button
               type="button"
-              onClick={handleFillDemoAdmin}
+              onClick={handleFillAdminCredentials}
               style={{
                 background: '#f59e0b20',
                 border: '1px solid #f59e0b',
@@ -156,22 +150,12 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
                 cursor: 'pointer',
               }}
             >
-              ⚡ Auto-Fill Demo Admin
+              ⚡ Auto-Fill My Admin Credentials
             </button>
           </div>
           <div style={{ color: '#cbd5e1', lineHeight: '1.6' }}>
-            <div>Email: <code style={{ color: '#71e0b0' }}>admin@geoattend.com</code></div>
-            <div>Password: <code style={{ color: '#71e0b0' }}>Admin1234!</code></div>
-          </div>
-          <div style={{ marginTop: '8px', borderTop: '1px solid #ffffff12', paddingTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
-            * Your personal account <strong style={{ color: '#71e0b0' }}>prakshalraj111@gmail.com</strong> is also an Authority Admin!{' '}
-            <button
-              type="button"
-              onClick={handleFillUserAdmin}
-              style={{ background: 'transparent', border: 'none', color: '#71e0b0', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px' }}
-            >
-              Use this email
-            </button>
+            <div>Admin Email: <code style={{ color: '#71e0b0' }}>prakshalraj111@gmail.com</code></div>
+            <div>Password: <code style={{ color: '#71e0b0' }}>12345678</code></div>
           </div>
         </div>
       )}
