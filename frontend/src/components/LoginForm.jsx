@@ -2,13 +2,42 @@ import { useState } from 'react'
 import { loginUser, registerUser, setupFirstAdmin } from '../services/api.js'
 
 export default function LoginForm({ onBack, onLoginSuccess }) {
-  const [mode, setMode] = useState('login') // 'login' | 'register' | 'admin-setup'
+  const [mode, setMode] = useState('authority') // 'authority' | 'login' | 'register'
   const [fullName, setFullName] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('admin@geoattend.com')
+  const [password, setPassword] = useState('Admin1234!')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+
+  function handleSwitchMode(newMode) {
+    setMode(newMode)
+    setError('')
+    setSuccessMessage('')
+    if (newMode === 'authority') {
+      setEmail('admin@geoattend.com')
+      setPassword('Admin1234!')
+    } else if (newMode === 'login') {
+      setEmail('')
+      setPassword('')
+    } else if (newMode === 'register') {
+      setEmail('')
+      setPassword('')
+      setFullName('')
+    }
+  }
+
+  function handleFillUserAdmin() {
+    setEmail('prakshalraj111@gmail.com')
+    setPassword('')
+    setError('')
+  }
+
+  function handleFillDemoAdmin() {
+    setEmail('admin@geoattend.com')
+    setPassword('Admin1234!')
+    setError('')
+  }
 
   async function handleSubmit(event) {
     event.preventDefault()
@@ -17,23 +46,15 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
     setLoading(true)
 
     try {
-      if (mode === 'login') {
+      if (mode === 'login' || mode === 'authority') {
         const result = await loginUser(email, password)
-        setSuccessMessage('Login successful! Redirecting...')
+        setSuccessMessage(`Login successful as ${result.employee.role.toUpperCase()}! Redirecting...`)
         if (onLoginSuccess) {
           onLoginSuccess(result.employee)
         }
       } else if (mode === 'register') {
         await registerUser(fullName, email, password)
         setSuccessMessage('Account registered successfully! Signing in...')
-        // Auto sign-in after registration
-        const result = await loginUser(email, password)
-        if (onLoginSuccess) {
-          onLoginSuccess(result.employee)
-        }
-      } else if (mode === 'admin-setup') {
-        await setupFirstAdmin(fullName, email, password)
-        setSuccessMessage('Initial Administrator created! Signing in...')
         const result = await loginUser(email, password)
         if (onLoginSuccess) {
           onLoginSuccess(result.employee)
@@ -41,7 +62,7 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
       }
     } catch (err) {
       console.error('Auth error:', err)
-      setError(err.message || 'Authentication request failed. Please check your credentials.')
+      setError(err.message || 'Authentication request failed. Please check your email and password.')
     } finally {
       setLoading(false)
     }
@@ -53,35 +74,40 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
       <div className="auth-tabs">
         <button
           type="button"
-          className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('login')
-            setError('')
-            setSuccessMessage('')
-          }}
+          className={`auth-tab ${mode === 'authority' ? 'active' : ''}`}
+          onClick={() => handleSwitchMode('authority')}
+          style={mode === 'authority' ? { color: '#fbbf24', background: '#35250c' } : {}}
         >
-          Sign In
+          🛡️ Authority Portal
+        </button>
+        <button
+          type="button"
+          className={`auth-tab ${mode === 'login' ? 'active' : ''}`}
+          onClick={() => handleSwitchMode('login')}
+        >
+          Employee Sign In
         </button>
         <button
           type="button"
           className={`auth-tab ${mode === 'register' ? 'active' : ''}`}
-          onClick={() => {
-            setMode('register')
-            setError('')
-            setSuccessMessage('')
-          }}
+          onClick={() => handleSwitchMode('register')}
         >
-          Create Account
+          Register New Staff
         </button>
       </div>
 
       <p className="eyebrow">
-        {mode === 'login' && 'WELCOME BACK'}
-        {mode === 'register' && 'JOIN GEOATTEND'}
-        {mode === 'admin-setup' && 'SYSTEM INITIALIZATION'}
+        {mode === 'authority' && 'ADMINISTRATIVE ACCESS'}
+        {mode === 'login' && 'EMPLOYEE LOGIN'}
+        {mode === 'register' && 'NEW ACCOUNT REGISTRATION'}
       </p>
 
       <h1>
+        {mode === 'authority' && (
+          <>
+            Authority <span>Admin Panel.</span>
+          </>
+        )}
         {mode === 'login' && (
           <>
             Sign in to <span>GeoAttend.</span>
@@ -92,18 +118,63 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
             Register your <span>profile.</span>
           </>
         )}
-        {mode === 'admin-setup' && (
-          <>
-            Setup Initial <span>Admin.</span>
-          </>
-        )}
       </h1>
 
       <p className="description">
-        {mode === 'login' && 'Enter your verified employee credentials to access your attendance workspace.'}
-        {mode === 'register' && 'Create your employee account to start recording location-verified attendance.'}
-        {mode === 'admin-setup' && 'Initialize the primary administrator account for this system.'}
+        {mode === 'authority' &&
+          'Sign in with administrative privileges to view all employee registrations, track real-time attendance with GPS coordinates, and manage office locations.'}
+        {mode === 'login' &&
+          'Sign in with your employee email to access your attendance workspace, verify location, and capture check-in photos.'}
+        {mode === 'register' &&
+          'Create a new employee profile with full name, email, and password.'}
       </p>
+
+      {/* Authority quick credentials card */}
+      {mode === 'authority' && (
+        <div
+          style={{
+            background: '#191b16',
+            border: '1px solid #f59e0b50',
+            borderRadius: '12px',
+            padding: '14px 16px',
+            marginBottom: '18px',
+            fontSize: '13px',
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <strong style={{ color: '#fbbf24' }}>🔑 Authority Credentials:</strong>
+            <button
+              type="button"
+              onClick={handleFillDemoAdmin}
+              style={{
+                background: '#f59e0b20',
+                border: '1px solid #f59e0b',
+                color: '#fbbf24',
+                padding: '4px 10px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                cursor: 'pointer',
+              }}
+            >
+              ⚡ Auto-Fill Demo Admin
+            </button>
+          </div>
+          <div style={{ color: '#cbd5e1', lineHeight: '1.6' }}>
+            <div>Email: <code style={{ color: '#71e0b0' }}>admin@geoattend.com</code></div>
+            <div>Password: <code style={{ color: '#71e0b0' }}>Admin1234!</code></div>
+          </div>
+          <div style={{ marginTop: '8px', borderTop: '1px solid #ffffff12', paddingTop: '8px', fontSize: '12px', color: '#94a3b8' }}>
+            * Your personal account <strong style={{ color: '#71e0b0' }}>prakshalraj111@gmail.com</strong> is also an Authority Admin!{' '}
+            <button
+              type="button"
+              onClick={handleFillUserAdmin}
+              style={{ background: 'transparent', border: 'none', color: '#71e0b0', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px' }}
+            >
+              Use this email
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="auth-alert error" role="alert">
@@ -118,7 +189,7 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
       )}
 
       <form onSubmit={handleSubmit} className="login-form">
-        {(mode === 'register' || mode === 'admin-setup') && (
+        {mode === 'register' && (
           <div>
             <label htmlFor="fullName">Full Name</label>
             <input
@@ -154,64 +225,47 @@ export default function LoginForm({ onBack, onLoginSuccess }) {
           <input
             id="password"
             type="password"
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            placeholder="Enter password (min 8 chars)"
+            autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+            placeholder="Enter password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={8}
+            minLength={6}
             maxLength={128}
             disabled={loading}
           />
         </div>
 
-        <button className="primary-button submit-btn" type="submit" disabled={loading}>
+        <button
+          className="primary-button submit-btn"
+          type="submit"
+          disabled={loading}
+          style={
+            mode === 'authority'
+              ? { background: '#f59e0b', borderColor: '#f59e0b', color: '#1a1505' }
+              : {}
+          }
+        >
           {loading ? (
-            <span className="spinner-text">Processing...</span>
+            <span className="spinner-text">Authenticating...</span>
+          ) : mode === 'authority' ? (
+            'Enter Authority Admin Console →'
           ) : mode === 'login' ? (
-            'Sign In'
-          ) : mode === 'register' ? (
-            'Create Account'
+            'Sign In to Workspace'
           ) : (
-            'Initialize Admin'
+            'Create Account'
           )}
         </button>
       </form>
 
       <div className="auth-footer-actions">
-        {mode !== 'admin-setup' ? (
-          <button
-            type="button"
-            className="text-link-btn"
-            onClick={() => {
-              setMode('admin-setup')
-              setError('')
-              setSuccessMessage('')
-            }}
-          >
-            Need to initialize the primary administrator?
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="text-link-btn"
-            onClick={() => {
-              setMode('login')
-              setError('')
-              setSuccessMessage('')
-            }}
-          >
-            ← Back to normal sign in
-          </button>
-        )}
-
         <button
           className="secondary-button back-button"
           type="button"
           onClick={onBack}
           disabled={loading}
         >
-          Back to Home
+          ← Back to Home
         </button>
       </div>
     </section>

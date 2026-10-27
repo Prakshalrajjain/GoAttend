@@ -29,7 +29,7 @@ export default function Navbar({ user, activeSection, onNavigate, onLogout }) {
                 className={`nav-link-btn admin-link ${activeSection === 'admin-dashboard' ? 'active' : ''}`}
                 onClick={() => onNavigate('admin-dashboard')}
               >
-                🛡️ Admin Console
+                🛡️ Authority Panel
               </button>
             )}
 
@@ -54,6 +54,15 @@ export default function Navbar({ user, activeSection, onNavigate, onLogout }) {
               onClick={() => onNavigate('features')}
             >
               Features
+            </button>
+
+            <button
+              type="button"
+              className="secondary-button"
+              style={{ borderColor: '#f59e0b', color: '#fbbf24', fontSize: '13px', padding: '8px 14px' }}
+              onClick={() => onNavigate('login')}
+            >
+              🛡️ Authority Portal
             </button>
 
             <button

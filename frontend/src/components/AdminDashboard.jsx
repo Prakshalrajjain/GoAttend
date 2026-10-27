@@ -12,7 +12,7 @@ import {
 import PlotlyChart from './PlotlyChart.jsx'
 
 export default function AdminDashboard({ user }) {
-  const [activeTab, setActiveTab] = useState('analytics') // 'analytics' | 'attendance' | 'offices' | 'employees'
+  const [activeTab, setActiveTab] = useState('attendance') // 'attendance' | 'employees' | 'offices' | 'analytics'
 
   // Analytics state
   const [analytics, setAnalytics] = useState(null)
@@ -199,18 +199,19 @@ export default function AdminDashboard({ user }) {
       {/* Header */}
       <header className="dashboard-header">
         <div>
-          <span className="eyebrow">ADMINISTRATIVE CONTROL CENTER</span>
-          <h1>System <span>Management & Analytics</span></h1>
+          <span className="eyebrow">AUTHORITY CONTROL PANEL — REAL-TIME MONITORING</span>
+          <h1>Authority <span>Admin Command Center</span></h1>
           <p className="description">
-            Monitor real-time attendance, review audit trails, configure office geofences, and manage organization staff.
+            Live organization oversight: view all staff registrations, inspect attendance records with exact GPS coordinates and photo evidence, configure geofences, and export data.
           </p>
         </div>
 
         <div className="admin-badge-card">
           <span className="shield-icon">🛡️</span>
           <div>
-            <strong>Administrator</strong>
+            <strong>System Authority</strong>
             <span className="admin-email">{user?.email}</span>
+            <span className="role-chip">ADMIN ACCESS</span>
           </div>
         </div>
       </header>
@@ -219,31 +220,31 @@ export default function AdminDashboard({ user }) {
       <nav className="admin-nav-tabs">
         <button
           type="button"
-          className={`admin-nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
-          onClick={() => setActiveTab('analytics')}
-        >
-          📊 Analytics & Metrics
-        </button>
-        <button
-          type="button"
           className={`admin-nav-tab ${activeTab === 'attendance' ? 'active' : ''}`}
           onClick={() => setActiveTab('attendance')}
         >
-          📋 Attendance Monitor
-        </button>
-        <button
-          type="button"
-          className={`admin-nav-tab ${activeTab === 'offices' ? 'active' : ''}`}
-          onClick={() => setActiveTab('offices')}
-        >
-          🏢 Office Geofences
+          📋 Real-Time Attendance with GPS
         </button>
         <button
           type="button"
           className={`admin-nav-tab ${activeTab === 'employees' ? 'active' : ''}`}
           onClick={() => setActiveTab('employees')}
         >
-          👥 Employee Directory
+          👥 All Registrations (Staff Directory)
+        </button>
+        <button
+          type="button"
+          className={`admin-nav-tab ${activeTab === 'offices' ? 'active' : ''}`}
+          onClick={() => setActiveTab('offices')}
+        >
+          🏢 Office Geofences & Radius
+        </button>
+        <button
+          type="button"
+          className={`admin-nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+          onClick={() => setActiveTab('analytics')}
+        >
+          📊 Analytics & Plotly Trends
         </button>
       </nav>
 
