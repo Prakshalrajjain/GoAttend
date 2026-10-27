@@ -5,6 +5,7 @@ import {
   getMyAttendanceHistory,
   getOfficeLocations,
   getTodayAttendance,
+  resolvePhotoUrl,
   verifyGeofence,
 } from '../services/api.js'
 import CameraCapture from './CameraCapture.jsx'
@@ -336,14 +337,14 @@ export default function EmployeeDashboard({ user, onLogout }) {
                         }
                       >
                         <img
-                          src={todayData.record.photo_url}
+                          src={resolvePhotoUrl(todayData.record.photo_url)}
                           alt="User clicked selfie"
                           className="evidence-photo-thumb"
                         />
                         <span className="thumb-caption">📸 Selfie</span>
                       </div>
                     )}
-                    {todayData.record.live_frame_url && (
+                    {(todayData.record.live_frame_url || todayData.record.photo_url) && (
                       <div
                         className="evidence-thumb-wrapper"
                         onClick={() =>
@@ -355,7 +356,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
                         }
                       >
                         <img
-                          src={todayData.record.live_frame_url}
+                          src={resolvePhotoUrl(todayData.record.live_frame_url || todayData.record.photo_url)}
                           alt="Live video stream frame"
                           className="evidence-photo-thumb"
                         />
@@ -620,19 +621,34 @@ export default function EmployeeDashboard({ user, onLogout }) {
                     </td>
                     <td>
                       {item.photo_url || item.live_frame_url ? (
-                        <button
-                          type="button"
-                          className="view-photo-btn"
-                          onClick={() =>
-                            setPreviewModalData({
-                              photoUrl: item.photo_url,
-                              liveFrameUrl: item.live_frame_url,
-                              title: `Attendance Verification Proofs — ${formatDate(item.check_in_at)}`,
-                            })
-                          }
-                        >
-                          📷 2 Proofs
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <img
+                            src={resolvePhotoUrl(item.photo_url || item.live_frame_url)}
+                            alt="Selfie thumbnail"
+                            className="table-photo-thumb"
+                            onClick={() =>
+                              setPreviewModalData({
+                                photoUrl: item.photo_url,
+                                liveFrameUrl: item.live_frame_url,
+                                title: `Attendance Verification Proofs — ${formatDate(item.check_in_at)}`,
+                              })
+                            }
+                            title="Click to zoom selfie proofs"
+                          />
+                          <button
+                            type="button"
+                            className="view-photo-btn"
+                            onClick={() =>
+                              setPreviewModalData({
+                                photoUrl: item.photo_url,
+                                liveFrameUrl: item.live_frame_url,
+                                title: `Attendance Verification Proofs — ${formatDate(item.check_in_at)}`,
+                              })
+                            }
+                          >
+                            📷 2 Proofs
+                          </button>
+                        </div>
                       ) : (
                         '—'
                       )}
@@ -664,7 +680,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
               <div className="modal-proof-item">
                 <span className="proof-tag tag-primary">📸 Proof 1: User-Clicked Selfie</span>
                 <img
-                  src={previewModalData.photoUrl}
+                  src={resolvePhotoUrl(previewModalData.photoUrl)}
                   alt="User clicked verification selfie"
                   className="modal-img"
                 />
@@ -674,7 +690,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
               <div className="modal-proof-item">
                 <span className="proof-tag tag-secondary">🎥 Proof 2: Live Video Stream Frame</span>
                 <img
-                  src={previewModalData.liveFrameUrl || previewModalData.photoUrl}
+                  src={resolvePhotoUrl(previewModalData.liveFrameUrl || previewModalData.photoUrl)}
                   alt="Automated frame from live video feed"
                   className="modal-img"
                 />

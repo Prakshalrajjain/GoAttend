@@ -36,6 +36,21 @@ export function clearAuth() {
   localStorage.removeItem('geoattend_user')
 }
 
+// Helper to resolve photo URLs across frontend and backend dev environments
+export function resolvePhotoUrl(photoPath) {
+  if (!photoPath) return ''
+  if (
+    photoPath.startsWith('data:') ||
+    photoPath.startsWith('http://') ||
+    photoPath.startsWith('https://') ||
+    photoPath.startsWith('blob:')
+  ) {
+    return photoPath
+  }
+  const cleanPath = photoPath.startsWith('/') ? photoPath : `/${photoPath}`
+  return `${API_BASE_URL}${cleanPath}`
+}
+
 async function request(endpoint, options = {}) {
   const url = `${API_BASE_URL}${endpoint}`
   const headers = {

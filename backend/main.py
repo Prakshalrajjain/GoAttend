@@ -590,7 +590,7 @@ def check_out(
                 cursor.execute(
                     """
                     SELECT a.id, a.employee_id, a.office_location_id, a.check_in_at, a.check_out_at,
-                           a.photo_url, a.check_in_latitude, a.check_in_longitude, a.status,
+                           a.photo_url, a.live_frame_url, a.check_in_latitude, a.check_in_longitude, a.status,
                            o.name AS office_name
                     FROM attendance a
                     JOIN office_locations o ON a.office_location_id = o.id
@@ -602,7 +602,7 @@ def check_out(
                 cursor.execute(
                     """
                     SELECT a.id, a.employee_id, a.office_location_id, a.check_in_at, a.check_out_at,
-                           a.photo_url, a.check_in_latitude, a.check_in_longitude, a.status,
+                           a.photo_url, a.live_frame_url, a.check_in_latitude, a.check_in_longitude, a.status,
                            o.name AS office_name
                     FROM attendance a
                     JOIN office_locations o ON a.office_location_id = o.id
@@ -628,7 +628,7 @@ def check_out(
                 )
 
             attendance_id = record[0]
-            office_name = record[9]
+            office_name = record[10]
 
             # Update check-out timestamp
             cursor.execute(
@@ -668,9 +668,10 @@ def check_out(
         "check_in_at": record[3],
         "check_out_at": check_out_at,
         "photo_url": record[5],
-        "check_in_latitude": record[6],
-        "check_in_longitude": record[7],
-        "status": record[8],
+        "live_frame_url": record[6],
+        "check_in_latitude": record[7],
+        "check_in_longitude": record[8],
+        "status": record[9],
     }
 
 

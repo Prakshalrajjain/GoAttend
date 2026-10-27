@@ -7,6 +7,7 @@ import {
   getAdminEmployees,
   getExportCsvUrl,
   getOfficeLocations,
+  resolvePhotoUrl,
   updateEmployeeRole,
 } from '../services/api.js'
 import PlotlyChart from './PlotlyChart.jsx'
@@ -448,21 +449,36 @@ export default function AdminDashboard({ user }) {
                         </td>
                         <td>
                           {r.photo_url || r.live_frame_url ? (
-                            <button
-                              type="button"
-                              className="view-photo-btn"
-                              onClick={() =>
-                                setPreviewModalData({
-                                  photoUrl: r.photo_url,
-                                  liveFrameUrl: r.live_frame_url,
-                                  title: `Dual Verification Proofs — ${r.employee_name}`,
-                                })
-                              }
-                            >
-                              📷 2 Proofs
-                            </button>
+                            <div className="table-proofs-cell">
+                              <img
+                                src={resolvePhotoUrl(r.photo_url || r.live_frame_url)}
+                                alt={r.employee_name}
+                                className="table-photo-thumb"
+                                onClick={() =>
+                                  setPreviewModalData({
+                                    photoUrl: r.photo_url,
+                                    liveFrameUrl: r.live_frame_url,
+                                    title: `Dual Verification Proofs — ${r.employee_name}`,
+                                  })
+                                }
+                                title="Click to view full proofs"
+                              />
+                              <button
+                                type="button"
+                                className="view-photo-btn"
+                                onClick={() =>
+                                  setPreviewModalData({
+                                    photoUrl: r.photo_url,
+                                    liveFrameUrl: r.live_frame_url,
+                                    title: `Dual Verification Proofs — ${r.employee_name}`,
+                                  })
+                                }
+                              >
+                                👁️ 2 Proofs
+                              </button>
+                            </div>
                           ) : (
-                            '—'
+                            <span className="text-subtle">No Photo</span>
                           )}
                         </td>
                       </tr>
@@ -705,21 +721,41 @@ export default function AdminDashboard({ user }) {
               <div className="modal-proof-item">
                 <span className="proof-tag tag-primary">📸 Proof 1: User-Clicked Selfie</span>
                 <img
-                  src={previewModalData.photoUrl}
+                  src={resolvePhotoUrl(previewModalData.photoUrl)}
                   alt="User clicked verification selfie"
                   className="modal-img"
                 />
                 <span className="proof-sub">Triggered explicitly by employee</span>
+                {previewModalData.photoUrl && (
+                  <a
+                    href={resolvePhotoUrl(previewModalData.photoUrl)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: '11px', color: '#38bdf8', textAlign: 'center', marginTop: '6px', textDecoration: 'underline' }}
+                  >
+                    Open Full Image ↗
+                  </a>
+                )}
               </div>
 
               <div className="modal-proof-item">
                 <span className="proof-tag tag-secondary">🎥 Proof 2: Live Video Stream Frame</span>
                 <img
-                  src={previewModalData.liveFrameUrl || previewModalData.photoUrl}
+                  src={resolvePhotoUrl(previewModalData.liveFrameUrl || previewModalData.photoUrl)}
                   alt="Automated frame from live video feed"
                   className="modal-img"
                 />
                 <span className="proof-sub">Automated live video sensor capture</span>
+                {(previewModalData.liveFrameUrl || previewModalData.photoUrl) && (
+                  <a
+                    href={resolvePhotoUrl(previewModalData.liveFrameUrl || previewModalData.photoUrl)}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: '11px', color: '#38bdf8', textAlign: 'center', marginTop: '6px', textDecoration: 'underline' }}
+                  >
+                    Open Full Image ↗
+                  </a>
+                )}
               </div>
             </div>
           </div>
