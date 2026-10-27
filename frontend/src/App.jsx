@@ -1,155 +1,260 @@
-
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './App.css'
 import Navbar from './components/Navbar.jsx'
-import FeatureList from './components/FeatureList.jsx'
 import LocationCard from './components/LocationCard.jsx'
 import LoginForm from './components/LoginForm.jsx'
-import BackendStatus from './components/BackendStatus.jsx'
 import OfficeLocations from './components/OfficeLocations.jsx'
+import EmployeeDashboard from './components/EmployeeDashboard.jsx'
+import AdminDashboard from './components/AdminDashboard.jsx'
+import { clearAuth, getAuthToken, getMe, getStoredUser } from './services/api.js'
 
-function App() {
-  const [activeSection, setActiveSection] = useState('home')
+export default function App() {
+  const [currentUser, setCurrentUser] = useState(getStoredUser())
+  const [activeSection, setActiveSection] = useState(() => {
+    const user = getStoredUser()
+    if (user) {
+      return user.role === 'admin' ? 'admin-dashboard' : 'employee-dashboard'
+    }
+    return 'home'
+  })
 
-  function handleGetStarted() {
-    setActiveSection('login')
+  // Verify stored token on startup
+  useEffect(() => {
+    const token = getAuthToken()
+    if (token) {
+      getMe()
+        .then((user) => {
+          setCurrentUser(user)
+        })
+        .catch(() => {
+          clearAuth()
+          setCurrentUser(null)
+          setActiveSection('home')
+        })
+    }
+  }, [])
+
+  function handleLoginSuccess(user) {
+    setCurrentUser(user)
+    if (user.role === 'admin') {
+      setActiveSection('admin-dashboard')
+    } else {
+      setActiveSection('employee-dashboard')
+    }
   }
 
-  function handleLearnMore() {
-    setActiveSection('features')
+  function handleLogout() {
+    clearAuth()
+    setCurrentUser(null)
+    setActiveSection('home')
   }
 
   return (
     <div className="app">
-      <header className="navbar">
-        <div className="brand">
-          <span className="brand-icon">G</span>
-          <span>GeoAttend</span>
-        </div>
+      <Navbar
+        user={currentUser}
+        activeSection={activeSection}
+        onNavigate={setActiveSection}
+        onLogout={handleLogout}
+      />
 
-        <span className="status">Attendance made smarter</span>
-      </header>
+      <main className="main-content">
+        {/* PUBLIC HOME LANDING */}
+        {activeSection === 'home' && (
+          <>
+            <section className="hero">
+              <div className="hero-content">
+                <p className="eyebrow">SMART ATTENDANCE MANAGEMENT SYSTEM</p>
+                <h1>
+                  Attendance that
+                  <br />
+                  <span>knows your exact location.</span>
+                </h1>
 
-      <main className="hero">
-        <div className="hero-content">
-          {activeSection === 'home' && (
-            <>
-              <BackendStatus />
+                <p className="description">
+                  GeoAttend pairs browser Geolocation API with server-side Haversine distance
+                  verification and live camera selfie capture to prevent proxy attendance and maintain
+                  tamper-evident audit trails.
+                </p>
 
-              <p className="eyebrow">
-                SMART ATTENDANCE MANAGEMENT
-              </p>
+                <div className="actions">
+                  {currentUser ? (
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() =>
+                        setActiveSection(
+                          currentUser.role === 'admin'
+                            ? 'admin-dashboard'
+                            : 'employee-dashboard',
+                        )
+                      }
+                    >
+                      Open My Workspace →
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        className="primary-button"
+                        type="button"
+                        onClick={() => setActiveSection('login')}
+                      >
+                        Sign In / Register
+                      </button>
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => setActiveSection('features')}
+                      >
+                        Learn How It Works
+                      </button>
+                    </>
+                  )}
+                </div>
 
-              <h1>
-                Attendance that
-                <br />
-                <span>knows your location.</span>
-              </h1>
+                <div className="features">
+                  <div className="feature">
+                    <span className="feature-icon">◎</span>
+                    <span>GPS Geofencing (Haversine)</span>
+                  </div>
 
-              <p className="description">
-                A smarter attendance experience using location
-                verification, photo capture, and secure digital records.
-              </p>
+                  <div className="feature">
+                    <span className="feature-icon">▣</span>
+                    <span>Live Camera Verification</span>
+                  </div>
 
-              <div className="actions">
-                <button
-                  className="primary-button"
-                  type="button"
-                  onClick={handleGetStarted}
-                >
-                  Get Started
-                </button>
-
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={handleLearnMore}
-                >
-                  Learn More
-                </button>
+                  <div className="feature">
+                    <span className="feature-icon">🛡️</span>
+                    <span>Argon2 & JWT Security</span>
+                  </div>
+                </div>
               </div>
-            </>
-          )}
 
-          {activeSection === 'login' && (
+              <div className="visual">
+                <LocationCard />
+              </div>
+            </section>
+
+            <section className="home-locations-section">
+              <OfficeLocations />
+            </section>
+          </>
+        )}
+
+        {/* AUTHENTICATION: LOGIN & REGISTER */}
+        {activeSection === 'login' && (
+          <div className="auth-view-wrapper">
             <LoginForm
               onBack={() => setActiveSection('home')}
+              onLoginSuccess={handleLoginSuccess}
             />
-          )}
+          </div>
+        )}
 
-          {activeSection === 'features' && (
-            <section>
-              <p className="eyebrow">HOW GEOATTEND WORKS</p>
-
+        {/* FEATURES OVERVIEW PAGE */}
+        {activeSection === 'features' && (
+          <section className="features-deepdive">
+            <div className="features-header">
+              <p className="eyebrow">SYSTEM ARCHITECTURE</p>
               <h1>Verify. Record. Review.</h1>
-
               <p className="description">
-                GeoAttend is designed to combine location verification,
-                photo evidence, attendance records, and analytics.
+                GeoAttend combines real-time device sensor readings with strict server-side validation
+                to create trustworthy digital attendance records.
               </p>
+            </div>
 
+            <div className="features-grid">
+              <div className="feature-detail-card">
+                <span className="detail-icon">📍</span>
+                <h3>Haversine Geofencing</h3>
+                <p>
+                  Coordinates obtained from the browser Geolocation API are never trusted blindly.
+                  The FastAPI server computes the spherical great-circle distance using the Haversine
+                  formula and validates that the employee is physically located within the authorized office radius.
+                </p>
+              </div>
+
+              <div className="feature-detail-card">
+                <span className="detail-icon">📷</span>
+                <h3>Live Selfie Capture</h3>
+                <p>
+                  Employees must capture a live photo directly from their camera stream. Pre-recorded or
+                  arbitrary file uploads are disallowed, providing verifiable photographic evidence for every check-in.
+                </p>
+              </div>
+
+              <div className="feature-detail-card">
+                <span className="detail-icon">🔒</span>
+                <h3>Argon2 & JWT Auth</h3>
+                <p>
+                  Passwords are automatically hashed using memory-hard Argon2id with unique salts.
+                  Authenticated sessions utilize cryptographically signed JSON Web Tokens (JWT) with strict
+                  expiry and role-based access control.
+                </p>
+              </div>
+
+              <div className="feature-detail-card">
+                <span className="detail-icon">📊</span>
+                <h3>PostgreSQL Audit & Analytics</h3>
+                <p>
+                  Every check-in, check-out, and administrative modification is permanently logged with
+                  timestamp, actor ID, and metadata in <code>attendance_audit</code>. Administrators enjoy real-time
+                  Plotly charts and CSV exports.
+                </p>
+              </div>
+            </div>
+
+            <div className="features-back-action">
               <button
                 className="secondary-button"
                 type="button"
                 onClick={() => setActiveSection('home')}
               >
-                Back to Home
+                ← Back to Home
               </button>
-            </section>
-          )}
-
-          <div className="features">
-            <div className="feature">
-              <span className="feature-icon">◎</span>
-              <span>GPS Verification</span>
             </div>
+          </section>
+        )}
 
-            <div className="feature">
-              <span className="feature-icon">▣</span>
-              <span>Photo Verification</span>
+        {/* EMPLOYEE DASHBOARD */}
+        {activeSection === 'employee-dashboard' && (
+          currentUser ? (
+            <EmployeeDashboard user={currentUser} onLogout={handleLogout} />
+          ) : (
+            <div className="auth-view-wrapper">
+              <LoginForm
+                onBack={() => setActiveSection('home')}
+                onLoginSuccess={handleLoginSuccess}
+              />
             </div>
+          )
+        )}
 
-            <div className="feature">
-              <span className="feature-icon">✓</span>
-              <span>Secure Records</span>
+        {/* ADMIN DASHBOARD */}
+        {activeSection === 'admin-dashboard' && (
+          currentUser?.role === 'admin' ? (
+            <AdminDashboard user={currentUser} />
+          ) : (
+            <div className="unauthorized-card">
+              <h2>⚠️ Access Denied</h2>
+              <p>You must be an administrator to access this area.</p>
+              <button
+                className="primary-button"
+                onClick={() => setActiveSection('employee-dashboard')}
+              >
+                Return to My Attendance
+              </button>
             </div>
-          </div>
-        </div>
-
-        <div className="visual">
-          <div className="visual-card">
-            <div className="visual-top">
-              <span className="live-dot"></span>
-              LOCATION STATUS
-            </div>
-
-            <div className="map-circle">
-              <div className="map-ring ring-one"></div>
-              <div className="map-ring ring-two"></div>
-              <div className="map-pin">●</div>
-            </div>
-
-            <h2>Location-aware attendance</h2>
-            <p>Designed for verified check-ins</p>
-
-            <div className="visual-bottom">
-              <span>GPS</span>
-              <span>PHOTO</span>
-              <span>RECORD</span>
-            </div>
-          </div>
-        </div>
-
-        {activeSection === 'home' && (
-          <OfficeLocations />
+          )
         )}
       </main>
 
       <footer>
-        GeoAttend · GPS-Based Smart Attendance Management
+        <div className="footer-content">
+          <p>GeoAttend · GPS-Based Smart Attendance Management System</p>
+          <span className="footer-meta">B.Tech Artificial Intelligence Project · FastAPI + React + PostgreSQL</span>
+        </div>
       </footer>
     </div>
   )
 }
-
-export default App
