@@ -24,7 +24,7 @@ export default function AdminDashboard({ user }) {
   const [statusFilter, setStatusFilter] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
-  const [previewPhotoUrl, setPreviewPhotoUrl] = useState(null)
+  const [previewModalData, setPreviewModalData] = useState(null)
 
   // Office Locations state
   const [offices, setOffices] = useState([])
@@ -424,7 +424,7 @@ export default function AdminDashboard({ user }) {
                       <th>Check-Out</th>
                       <th>Status</th>
                       <th>Coordinates</th>
-                      <th>Evidence</th>
+                      <th>Evidence (Dual Frame)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -447,13 +447,19 @@ export default function AdminDashboard({ user }) {
                           {r.check_in_latitude?.toFixed(4)}, {r.check_in_longitude?.toFixed(4)}
                         </td>
                         <td>
-                          {r.photo_url ? (
+                          {r.photo_url || r.live_frame_url ? (
                             <button
                               type="button"
                               className="view-photo-btn"
-                              onClick={() => setPreviewPhotoUrl(r.photo_url)}
+                              onClick={() =>
+                                setPreviewModalData({
+                                  photoUrl: r.photo_url,
+                                  liveFrameUrl: r.live_frame_url,
+                                  title: `Dual Verification Proofs — ${r.employee_name}`,
+                                })
+                              }
                             >
-                              📷 View
+                              📷 2 Proofs
                             </button>
                           ) : (
                             '—'
@@ -680,21 +686,42 @@ export default function AdminDashboard({ user }) {
         </section>
       )}
 
-      {/* Photo Modal */}
-      {previewPhotoUrl && (
-        <div className="modal-backdrop" onClick={() => setPreviewPhotoUrl(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* Dual Photo Modal */}
+      {previewModalData && (
+        <div className="modal-backdrop" onClick={() => setPreviewModalData(null)}>
+          <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Verification Photo Proof</h3>
+              <h3>{previewModalData.title || 'Verification Photo Proofs'}</h3>
               <button
                 type="button"
                 className="modal-close-btn"
-                onClick={() => setPreviewPhotoUrl(null)}
+                onClick={() => setPreviewModalData(null)}
               >
                 ✕
               </button>
             </div>
-            <img src={previewPhotoUrl} alt="Attendance photo" className="modal-img" />
+
+            <div className="modal-dual-proofs-grid">
+              <div className="modal-proof-item">
+                <span className="proof-tag tag-primary">📸 Proof 1: User-Clicked Selfie</span>
+                <img
+                  src={previewModalData.photoUrl}
+                  alt="User clicked verification selfie"
+                  className="modal-img"
+                />
+                <span className="proof-sub">Triggered explicitly by employee</span>
+              </div>
+
+              <div className="modal-proof-item">
+                <span className="proof-tag tag-secondary">🎥 Proof 2: Live Video Stream Frame</span>
+                <img
+                  src={previewModalData.liveFrameUrl || previewModalData.photoUrl}
+                  alt="Automated frame from live video feed"
+                  className="modal-img"
+                />
+                <span className="proof-sub">Automated live video sensor capture</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

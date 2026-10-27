@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS attendance (
     check_in_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     check_out_at TIMESTAMPTZ,
     photo_url TEXT,
+    live_frame_url TEXT,
     check_in_latitude DOUBLE PRECISION NOT NULL,
     check_in_longitude DOUBLE PRECISION NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'present'

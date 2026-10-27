@@ -64,7 +64,8 @@ class CheckInRequest(BaseModel):
     office_location_id: int
     latitude: float = Field(ge=-90.0, le=90.0)
     longitude: float = Field(ge=-180.0, le=180.0)
-    photo_data: Optional[str] = None  # Base64 data URL or photo URL
+    photo_data: Optional[str] = None  # Base64 data URL for clicked selfie
+    live_frame_data: Optional[str] = None  # Base64 data URL for live stream video frame
 
 
 class CheckOutRequest(BaseModel):
@@ -83,7 +84,9 @@ class AttendanceOut(BaseModel):
     check_in_at: datetime
     check_out_at: Optional[datetime] = None
     photo_url: Optional[str] = None
+    live_frame_url: Optional[str] = None
     check_in_latitude: float
     check_in_longitude: float
     status: str
+
 

@@ -30,7 +30,7 @@ def is_cloudinary_configured() -> bool:
     )
 
 
-def save_attendance_photo(photo_data: str, employee_id: int) -> str:
+def save_attendance_photo(photo_data: str, employee_id: int, tag: str = "selfie") -> str:
     """
     Saves an attendance photo. Supports base64 data URLs or standard base64 strings.
     Uploads to Cloudinary if configured in .env, otherwise saves safely to local storage.
@@ -80,7 +80,7 @@ def save_attendance_photo(photo_data: str, employee_id: int) -> str:
             response = cloudinary.uploader.upload(
                 photo_data,  # Cloudinary accepts data URI directly
                 folder="geoattend/attendance",
-                public_id=f"emp_{employee_id}_{uuid.uuid4().hex[:8]}",
+                public_id=f"emp_{employee_id}_{tag}_{uuid.uuid4().hex[:8]}",
                 resource_type="image",
             )
             return response.get("secure_url") or response.get("url")
@@ -89,7 +89,7 @@ def save_attendance_photo(photo_data: str, employee_id: int) -> str:
             pass
 
     # Local fallback
-    filename = f"emp_{employee_id}_{uuid.uuid4().hex[:12]}.{file_extension}"
+    filename = f"emp_{employee_id}_{tag}_{uuid.uuid4().hex[:10]}.{file_extension}"
     file_path = LOCAL_PHOTOS_DIR / filename
     with open(file_path, "wb") as f:
         f.write(image_bytes)

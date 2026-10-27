@@ -172,7 +172,13 @@ export async function verifyGeofence(officeLocationId, latitude, longitude) {
   })
 }
 
-export async function checkInAttendance(officeLocationId, latitude, longitude, photoData) {
+export async function checkInAttendance(
+  officeLocationId,
+  latitude,
+  longitude,
+  photoData,
+  liveFrameData = null,
+) {
   return request('/api/attendance/check-in', {
     method: 'POST',
     body: JSON.stringify({
@@ -180,6 +186,7 @@ export async function checkInAttendance(officeLocationId, latitude, longitude, p
       latitude,
       longitude,
       photo_data: photoData,
+      live_frame_data: liveFrameData,
     }),
   })
 }

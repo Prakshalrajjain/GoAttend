@@ -19,6 +19,8 @@ export default function EmployeeDashboard({ user, onLogout }) {
   const [geofenceStatus, setGeofenceStatus] = useState(null)
   const [geofenceLoading, setGeofenceLoading] = useState(false)
   const [capturedPhoto, setCapturedPhoto] = useState(null)
+  const [liveStreamFrame, setLiveStreamFrame] = useState(null)
+  const [previewModalData, setPreviewModalData] = useState(null) // { photoUrl, liveFrameUrl, title }
 
   const [todayData, setTodayData] = useState({ has_checked_in: false, record: null })
   const [todayLoading, setTodayLoading] = useState(true)
@@ -172,9 +174,11 @@ export default function EmployeeDashboard({ user, onLogout }) {
         userCoords.latitude,
         userCoords.longitude,
         capturedPhoto,
+        liveStreamFrame,
       )
-      setActionSuccess('Attendance verified and recorded successfully!')
+      setActionSuccess('Attendance verified and recorded successfully with dual photo proofs!')
       setCapturedPhoto(null)
+      setLiveStreamFrame(null)
       await loadTodayStatus()
       await loadHistory()
     } catch (err) {
@@ -315,16 +319,50 @@ export default function EmployeeDashboard({ user, onLogout }) {
                 </div>
               </div>
 
-              {/* Photo Evidence if present */}
-              {todayData.record?.photo_url && (
-                <div className="attendance-evidence-box">
-                  <span className="evidence-label">Verification Photo Evidence:</span>
-                  <img
-                    src={todayData.record.photo_url}
-                    alt="Attendance selfie"
-                    className="evidence-photo-thumb"
-                    onClick={() => setPreviewPhotoUrl(todayData.record.photo_url)}
-                  />
+              {/* Dual Photo Evidence if present */}
+              {(todayData.record?.photo_url || todayData.record?.live_frame_url) && (
+                <div className="attendance-evidence-box dual-evidence-box">
+                  <span className="evidence-label">Dual Verification Proofs:</span>
+                  <div className="evidence-thumbs-group">
+                    {todayData.record.photo_url && (
+                      <div
+                        className="evidence-thumb-wrapper"
+                        onClick={() =>
+                          setPreviewModalData({
+                            photoUrl: todayData.record.photo_url,
+                            liveFrameUrl: todayData.record.live_frame_url,
+                            title: "Today's Attendance Verification Proofs",
+                          })
+                        }
+                      >
+                        <img
+                          src={todayData.record.photo_url}
+                          alt="User clicked selfie"
+                          className="evidence-photo-thumb"
+                        />
+                        <span className="thumb-caption">📸 Selfie</span>
+                      </div>
+                    )}
+                    {todayData.record.live_frame_url && (
+                      <div
+                        className="evidence-thumb-wrapper"
+                        onClick={() =>
+                          setPreviewModalData({
+                            photoUrl: todayData.record.photo_url,
+                            liveFrameUrl: todayData.record.live_frame_url,
+                            title: "Today's Attendance Verification Proofs",
+                          })
+                        }
+                      >
+                        <img
+                          src={todayData.record.live_frame_url}
+                          alt="Live video stream frame"
+                          className="evidence-photo-thumb"
+                        />
+                        <span className="thumb-caption">🎥 Stream Frame</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -440,7 +478,11 @@ export default function EmployeeDashboard({ user, onLogout }) {
                 <div className="step-content">
                   <CameraCapture
                     photoData={capturedPhoto}
-                    onPhotoCaptured={setCapturedPhoto}
+                    liveFrameData={liveStreamFrame}
+                    onPhotoCaptured={(photo, frame) => {
+                      setCapturedPhoto(photo)
+                      setLiveStreamFrame(frame)
+                    }}
                   />
                 </div>
               </div>
@@ -457,7 +499,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
                 </button>
                 {(!userCoords || !capturedPhoto) && (
                   <p className="requirements-note">
-                    * Both GPS location and live photo are required to submit attendance.
+                    * Both GPS location and live camera capture are required to submit attendance.
                   </p>
                 )}
               </div>
@@ -479,7 +521,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
               <li>
                 <span className="bullet-icon">📸</span>
                 <div>
-                  <strong>Live Camera Only:</strong> Arbitrary photo uploads are disallowed. Direct webcam capture prevents proxy attendance.
+                  <strong>Dual Photo Anti-Spoofing:</strong> GeoAttend saves two proofs: one selfie clicked by yourself, and an automated frame captured through the live camera video stream.
                 </div>
               </li>
               <li>
@@ -558,7 +600,7 @@ export default function EmployeeDashboard({ user, onLogout }) {
                   <th>Check-Out</th>
                   <th>Status</th>
                   <th>Coordinates</th>
-                  <th>Photo</th>
+                  <th>Verification Proofs</th>
                 </tr>
               </thead>
               <tbody>
@@ -577,13 +619,19 @@ export default function EmployeeDashboard({ user, onLogout }) {
                       {item.check_in_latitude?.toFixed(4)}, {item.check_in_longitude?.toFixed(4)}
                     </td>
                     <td>
-                      {item.photo_url ? (
+                      {item.photo_url || item.live_frame_url ? (
                         <button
                           type="button"
                           className="view-photo-btn"
-                          onClick={() => setPreviewPhotoUrl(item.photo_url)}
+                          onClick={() =>
+                            setPreviewModalData({
+                              photoUrl: item.photo_url,
+                              liveFrameUrl: item.live_frame_url,
+                              title: `Attendance Verification Proofs — ${formatDate(item.check_in_at)}`,
+                            })
+                          }
                         >
-                          👁️ View
+                          📷 2 Proofs
                         </button>
                       ) : (
                         '—'
@@ -597,21 +645,42 @@ export default function EmployeeDashboard({ user, onLogout }) {
         )}
       </section>
 
-      {/* Photo Modal Preview */}
-      {previewPhotoUrl && (
-        <div className="modal-backdrop" onClick={() => setPreviewPhotoUrl(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+      {/* Dual Photo Modal Preview */}
+      {previewModalData && (
+        <div className="modal-backdrop" onClick={() => setPreviewModalData(null)}>
+          <div className="modal-content modal-content-wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Attendance Verification Photo</h3>
+              <h3>{previewModalData.title || 'Attendance Verification Proofs'}</h3>
               <button
                 type="button"
                 className="modal-close-btn"
-                onClick={() => setPreviewPhotoUrl(null)}
+                onClick={() => setPreviewModalData(null)}
               >
                 ✕
               </button>
             </div>
-            <img src={previewPhotoUrl} alt="Attendance verification proof" className="modal-img" />
+
+            <div className="modal-dual-proofs-grid">
+              <div className="modal-proof-item">
+                <span className="proof-tag tag-primary">📸 Proof 1: User-Clicked Selfie</span>
+                <img
+                  src={previewModalData.photoUrl}
+                  alt="User clicked verification selfie"
+                  className="modal-img"
+                />
+                <span className="proof-sub">Triggered deliberately by employee</span>
+              </div>
+
+              <div className="modal-proof-item">
+                <span className="proof-tag tag-secondary">🎥 Proof 2: Live Video Stream Frame</span>
+                <img
+                  src={previewModalData.liveFrameUrl || previewModalData.photoUrl}
+                  alt="Automated frame from live video feed"
+                  className="modal-img"
+                />
+                <span className="proof-sub">Automated live video sensor capture</span>
+              </div>
+            </div>
           </div>
         </div>
       )}

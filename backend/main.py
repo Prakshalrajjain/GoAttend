@@ -484,41 +484,51 @@ def check_in(
                     detail=f"Check-in rejected: You are {distance_m}m away from {office_name}. Allowed radius is {allowed_radius}m.",
                 )
 
-            # 4. Process Photo Evidence
+            # 4. Process Photo Evidence (Dual Frame Verification)
             photo_url = None
             if req.photo_data:
                 try:
-                    photo_url = save_attendance_photo(req.photo_data, employee_id)
+                    photo_url = save_attendance_photo(req.photo_data, employee_id, tag="selfie")
                 except Exception as photo_err:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Failed to process verification photo: {str(photo_err)}",
+                        detail=f"Failed to process verification selfie: {str(photo_err)}",
                     )
             else:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Live photo verification is required for check-in.",
+                    detail="Live selfie photo verification is required for check-in.",
                 )
 
-            # 5. Determine status (e.g. 'present' or 'late' if after 10:00 AM local time)
-            # Default to present; can be adjusted based on schedule
+            # Automated live camera video stream frame
+            live_frame_url = None
+            if req.live_frame_data:
+                try:
+                    live_frame_url = save_attendance_photo(req.live_frame_data, employee_id, tag="liveframe")
+                except Exception:
+                    live_frame_url = photo_url
+            else:
+                live_frame_url = photo_url
+
+            # 5. Determine status (e.g. 'present' or 'late')
             attendance_status = "present"
 
-            # 6. Insert attendance record
+            # 6. Insert attendance record with dual verification frames
             cursor.execute(
                 """
                 INSERT INTO attendance (
-                    employee_id, office_location_id, check_in_at, photo_url,
+                    employee_id, office_location_id, check_in_at, photo_url, live_frame_url,
                     check_in_latitude, check_in_longitude, status
                 )
-                VALUES (%s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s)
+                VALUES (%s, %s, CURRENT_TIMESTAMP, %s, %s, %s, %s, %s)
                 RETURNING id, employee_id, office_location_id, check_in_at, check_out_at,
-                          photo_url, check_in_latitude, check_in_longitude, status
+                          photo_url, live_frame_url, check_in_latitude, check_in_longitude, status
                 """,
                 (
                     employee_id,
                     req.office_location_id,
                     photo_url,
+                    live_frame_url,
                     req.latitude,
                     req.longitude,
                     attendance_status,
@@ -536,6 +546,7 @@ def check_in(
                     "longitude": req.longitude,
                     "distance_meters": distance_m,
                     "photo_url": photo_url,
+                    "live_frame_url": live_frame_url,
                     "status": attendance_status,
                 }
             )
@@ -557,9 +568,10 @@ def check_in(
         "check_in_at": att_row[3],
         "check_out_at": att_row[4],
         "photo_url": att_row[5],
-        "check_in_latitude": att_row[6],
-        "check_in_longitude": att_row[7],
-        "status": att_row[8],
+        "live_frame_url": att_row[6],
+        "check_in_latitude": att_row[7],
+        "check_in_longitude": att_row[8],
+        "status": att_row[9],
     }
 
 
@@ -672,7 +684,7 @@ def get_today_attendance(
             cursor.execute(
                 """
                 SELECT a.id, a.employee_id, a.office_location_id, a.check_in_at, a.check_out_at,
-                       a.photo_url, a.check_in_latitude, a.check_in_longitude, a.status,
+                       a.photo_url, a.live_frame_url, a.check_in_latitude, a.check_in_longitude, a.status,
                        o.name AS office_name
                 FROM attendance a
                 JOIN office_locations o ON a.office_location_id = o.id
@@ -698,10 +710,11 @@ def get_today_attendance(
             "check_in_at": row[3],
             "check_out_at": row[4],
             "photo_url": row[5],
-            "check_in_latitude": row[6],
-            "check_in_longitude": row[7],
-            "status": row[8],
-            "office_name": row[9],
+            "live_frame_url": row[6],
+            "check_in_latitude": row[7],
+            "check_in_longitude": row[8],
+            "status": row[9],
+            "office_name": row[10],
         },
     }
 
@@ -715,7 +728,7 @@ def get_my_history(
     employee_id = current_employee["id"]
     query = """
         SELECT a.id, a.employee_id, a.office_location_id, a.check_in_at, a.check_out_at,
-               a.photo_url, a.check_in_latitude, a.check_in_longitude, a.status,
+               a.photo_url, a.live_frame_url, a.check_in_latitude, a.check_in_longitude, a.status,
                o.name AS office_name, e.full_name AS employee_name, e.email AS employee_email
         FROM attendance a
         JOIN office_locations o ON a.office_location_id = o.id
@@ -746,12 +759,13 @@ def get_my_history(
             "check_in_at": r[3],
             "check_out_at": r[4],
             "photo_url": r[5],
-            "check_in_latitude": r[6],
-            "check_in_longitude": r[7],
-            "status": r[8],
-            "office_name": r[9],
-            "employee_name": r[10],
-            "employee_email": r[11],
+            "live_frame_url": r[6],
+            "check_in_latitude": r[7],
+            "check_in_longitude": r[8],
+            "status": r[9],
+            "office_name": r[10],
+            "employee_name": r[11],
+            "employee_email": r[12],
         }
         for r in rows
     ]
@@ -860,7 +874,7 @@ def get_all_attendance(
 ):
     query = """
         SELECT a.id, a.employee_id, a.office_location_id, a.check_in_at, a.check_out_at,
-               a.photo_url, a.check_in_latitude, a.check_in_longitude, a.status,
+               a.photo_url, a.live_frame_url, a.check_in_latitude, a.check_in_longitude, a.status,
                o.name AS office_name, e.full_name AS employee_name, e.email AS employee_email
         FROM attendance a
         JOIN office_locations o ON a.office_location_id = o.id
@@ -900,12 +914,13 @@ def get_all_attendance(
             "check_in_at": r[3],
             "check_out_at": r[4],
             "photo_url": r[5],
-            "check_in_latitude": r[6],
-            "check_in_longitude": r[7],
-            "status": r[8],
-            "office_name": r[9],
-            "employee_name": r[10],
-            "employee_email": r[11],
+            "live_frame_url": r[6],
+            "check_in_latitude": r[7],
+            "check_in_longitude": r[8],
+            "status": r[9],
+            "office_name": r[10],
+            "employee_name": r[11],
+            "employee_email": r[12],
         }
         for r in rows
     ]
