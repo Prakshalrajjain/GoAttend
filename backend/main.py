@@ -36,9 +36,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Enable CORS for local development frontend
+# Enable CORS for local development frontend & mobile devices on local network
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https?://.*",
     allow_origins=[
         "http://localhost:5173",
         "http://127.0.0.1:5173",
@@ -987,6 +988,7 @@ def get_attendance_analytics(
 def export_attendance_csv(
     start_date: Optional[date] = None,
     end_date: Optional[date] = None,
+    office_id: Optional[int] = None,
     current_admin: dict = Depends(require_admin),
 ):
     query = """
@@ -999,6 +1001,9 @@ def export_attendance_csv(
         WHERE 1 = 1
     """
     params = []
+    if office_id:
+        query += " AND a.office_location_id = %s"
+        params.append(office_id)
     if start_date:
         query += " AND a.check_in_at::date >= %s"
         params.append(start_date)

@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://127.0.0.1:8000'
+const API_HOST = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : '127.0.0.1'
+const API_BASE_URL = `http://${API_HOST}:8000`
 
 // Token management in localStorage
 export function getAuthToken() {
@@ -245,9 +246,10 @@ export async function getAdminAnalytics() {
   return request('/api/admin/analytics')
 }
 
-export function getExportCsvUrl(startDate = '', endDate = '') {
+export function getExportCsvUrl(startDate = '', endDate = '', officeId = '') {
   const token = getAuthToken()
   const params = []
+  if (officeId) params.push(`office_id=${encodeURIComponent(officeId)}`)
   if (startDate) params.push(`start_date=${encodeURIComponent(startDate)}`)
   if (endDate) params.push(`end_date=${encodeURIComponent(endDate)}`)
   const query = params.length > 0 ? `?${params.join('&')}` : ''
